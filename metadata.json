@@ -1,0 +1,6 @@
+{
+  "name": "LingoBangla",
+  "description": "Learn • Translate • Grow — Complete English and Bengali language learning platform with AI translator, bilingual dictionary, speaking practice, grammar checker, flashcards, quizzes, and student dashboard.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
