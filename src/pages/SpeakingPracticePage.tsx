@@ -11,6 +11,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { postJson } from '../utils/apiClient';
 import { getFastCache, setFastCache } from '../utils/fastCache';
 import { speakText } from '../utils/speech';
 
@@ -238,19 +239,16 @@ export function SpeakingPracticePage() {
       setFeedbackError('');
 
       try {
-        const res = await fetch('/api/speaking/feedback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({
+        const json = await postJson<Omit<VoiceTurnResult, 'userSpoke'>>(
+          '/api/speaking/feedback',
+          {
             topic: selectedTopic.id,
             promptQuestion: currentQuestion,
             transcript: clean,
             meaningLanguage: meaningLang,
-          }),
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Could not evaluate spoken response.');
+          },
+          { signal: controller.signal, fallbackError: 'Could not evaluate spoken response.' }
+        );
 
         const payload = {
           whatYouSaidMeaning: json.whatYouSaidMeaning,

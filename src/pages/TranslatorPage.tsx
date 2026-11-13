@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getFlagEmoji, WORLD_COUNTRIES_195 } from '../data/worldCountries';
+import { postJson } from '../utils/apiClient';
 import { getFastCache, setFastCache } from '../utils/fastCache';
 import { isSpeechSynthesisSupported, speakText } from '../utils/speech';
 
@@ -96,14 +97,11 @@ export function TranslatorPage() {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch('/api/translate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({ text: trimmed, sourceLang, targetLang }),
-        });
-        const json = (await res.json()) as TranslateResult & { error?: string };
-        if (!res.ok) throw new Error(json.error || 'Translation failed.');
+        const json = await postJson<TranslateResult>(
+          '/api/translate',
+          { text: trimmed, sourceLang, targetLang },
+          { signal: controller.signal, fallbackError: 'Translation failed.' }
+        );
 
         setFastCache('tr', cacheKey, json);
         setTranslatedText(json.translatedText || '');

@@ -14,6 +14,7 @@ import { useApp } from '../context/AppContext';
 import { CURATED_DICTIONARY } from '../data/dictionaryAndVocab';
 import { WORLD_COUNTRIES_195 } from '../data/worldCountries';
 import { DictionaryEntry } from '../types';
+import { postJson } from '../utils/apiClient';
 import { getFastCache, setFastCache } from '../utils/fastCache';
 import { downloadVocabularyPdf, PdfWordItem } from '../utils/pdfExport';
 import { speakText } from '../utils/speech';
@@ -84,14 +85,11 @@ export function WordMeaningPage() {
 
     setSingleLoading(true);
     try {
-      const res = await fetch('/api/dictionary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({ word: clean, meaningLanguage: targetLang }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Could not look up word.');
+      const json = await postJson<DictionaryEntry>(
+        '/api/dictionary',
+        { word: clean, meaningLanguage: targetLang },
+        { signal: controller.signal, fallbackError: 'Could not look up word.' }
+      );
       setFastCache('dict', cacheKey, json);
       setActiveEntry(json);
     } catch (err) {
@@ -146,19 +144,16 @@ export function WordMeaningPage() {
             : cleanTopic;
         round += 1;
 
-        const res = await fetch('/api/words/bulk', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({
+        const json = await postJson<{ items?: PdfWordItem[] }>(
+          '/api/words/bulk',
+          {
             topic: workerTopic,
             count: reqCount,
             meaningLanguage: meaningLang,
             excludeWords: Array.from(seen).slice(-120),
-          }),
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Batch generation failed.');
+          },
+          { signal: controller.signal, fallbackError: 'Batch generation failed.' }
+        );
 
         const items: PdfWordItem[] = Array.isArray(json.items) ? json.items : [];
         if (items.length === 0) break;

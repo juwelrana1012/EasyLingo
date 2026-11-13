@@ -9,6 +9,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { postJson } from '../utils/apiClient';
 import { getFastCache, setFastCache } from '../utils/fastCache';
 
 interface GrammarIssue {
@@ -62,14 +63,11 @@ export function GrammarCheckerPage() {
     setResult(null);
 
     try {
-      const res = await fetch('/api/grammar/check', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({ text: clean, language }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Grammar check failed.');
+      const data = await postJson<GrammarAnalysis>(
+        '/api/grammar/check',
+        { text: clean, language },
+        { signal: controller.signal, fallbackError: 'Grammar check failed.' }
+      );
       setFastCache('gram', cacheKey, data);
       setResult(data);
     } catch (err) {

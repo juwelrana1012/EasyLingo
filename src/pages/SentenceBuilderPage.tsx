@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Loader2, PenTool, Sparkles, Volume2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { postJson } from '../utils/apiClient';
 import { getFastCache, setFastCache } from '../utils/fastCache';
 import { speakText } from '../utils/speech';
 
@@ -53,18 +54,15 @@ export function SentenceBuilderPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/sentences/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
+      const json = await postJson<SentenceResponse>(
+        '/api/sentences/generate',
+        {
           input: clean,
           meaningLanguage: meaningLang,
           focus,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Could not generate sentences.');
+        },
+        { signal: controller.signal, fallbackError: 'Could not generate sentences.' }
+      );
       setFastCache('sent', cacheKey, json);
       setResult(json);
     } catch (err) {

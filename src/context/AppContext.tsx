@@ -3,6 +3,7 @@ import { AppTheme, findThemeById } from '../data/themes';
 import { BASE_UI_STRINGS, BENGALI_UI_STRINGS, UiDictionary, UiStringKey } from '../data/uiStrings';
 import { CountryLanguage, WORLD_COUNTRIES_195 } from '../data/worldCountries';
 import { SavedWord, TranslationRecord } from '../types';
+import { postJson } from '../utils/apiClient';
 
 export type AppView = 'home' | 'workspace' | 'language' | 'themes';
 
@@ -182,16 +183,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     setTranslatingUi(true);
     try {
-      const res = await fetch('/api/ui-translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          targetLanguage: `${country.language} (${country.country})`,
-          strings: BASE_UI_STRINGS,
-        }),
+      const data = await postJson<{ translations?: Record<string, string> }>('/api/ui-translate', {
+        targetLanguage: `${country.language} (${country.country})`,
+        strings: BASE_UI_STRINGS,
       });
-      const data = await res.json();
-      if (res.ok && data.translations) {
+      if (data.translations) {
         const merged = { ...BASE_UI_STRINGS, ...data.translations };
         setUiStrings(merged);
         try {

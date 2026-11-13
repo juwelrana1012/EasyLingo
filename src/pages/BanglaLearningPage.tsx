@@ -11,6 +11,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { BANGLA_TOPICS } from '../data/banglaCurriculum';
 import { BanglaTopic } from '../types';
+import { postJson } from '../utils/apiClient';
 import { speakText } from '../utils/speech';
 
 export function BanglaLearningPage() {
@@ -36,13 +37,16 @@ export function BanglaLearningPage() {
     setBnError('');
     setBnResult(null);
     try {
-      const res = await fetch('/api/grammar/check', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: bnInput.trim(), language: 'bn' }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'বাংলা যাচাই করতে সমস্যা হয়েছে।');
+      const json = await postJson<{
+        hasErrors: boolean;
+        correctedText: string;
+        overallFeedbackBn: string;
+        issues: Array<{ original: string; correction: string; explanationBn: string }>;
+      }>(
+        '/api/grammar/check',
+        { text: bnInput.trim(), language: 'bn' },
+        { fallbackError: 'বাংলা যাচাই করতে সমস্যা হয়েছে।' }
+      );
       setBnResult(json);
     } catch (err) {
       setBnError(err instanceof Error ? err.message : 'বাংলা যাচাই করতে ব্যর্থ হয়েছে।');
